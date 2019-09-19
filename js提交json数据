@@ -1,0 +1,2 @@
+后台使用@RequestBody接收json对象
+前台ajax提交的时候需要对数据进行JSON.stringify()后再提交
