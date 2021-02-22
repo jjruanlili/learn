@@ -1,0 +1,32 @@
+1.尽量避免使用 select * ，返回无用的字段会降低效率。
+优化方式：使用具体的字段代替 select *，只返回使用到的字段。
+假设student表包含id,num,name,gender等字段
+原sql:select * from student;
+比如你只需要用到id,num,name
+优化后sql:select id,num,name from student;
+
+2.尽量避免使用 in 和 not in，会导致数据库引擎放弃索引进行全表扫描。
+优化方式：如果是连续数值，可以用 betwween 代替;如果是子查询，可以用 exists代替。
+	2.1连续数值原sql使用in:
+	select * from t where id in (2,3,4,5,6);
+	优化后使用between：
+	select * from t where id between 2 and 6;
+	2.2子查询原sql使用in:
+	select * from atestrll where zhujian in (
+	select zhujian from atestrll where param1 < 'd');
+	优化后使用exists:
+	select * from atestrll b1 where exists (
+	select zhujian from atestrll b2 where param1 < 'd' and b1.zhujian = b2.zhujian) ;
+
+3.尽量避免在字段开头模糊查询，会导致数据库引擎放弃索引进行全表扫描。
+优化方式:尽量在字段后面使用模糊查询。
+模糊查询即like "%"
+开头模糊查询如: select * from student where name like "%王";
+字段后模糊如：select * from student where name like "王%";
+
+
+4.尽量避免进行 null 值的判断，会导致数据库引擎放弃索引进行全表扫描。
+优化方式:可以给字段添加默认值 0，对 0 值进行判断。
+原sql:select * from atestrll where param1 IS NULL;
+优化:建表时设置字段默认值为0或者其他值(若建表时未设置,建表后也可修改),备注中说明各值含义。
+select * from atestrll where param1 = 0;
