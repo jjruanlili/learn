@@ -1,0 +1,184 @@
+spring cloud: spring+netflix
+通信:http  restful
+注册中心: eureka consul nacos
+配置中心：config
+断路器：hystrix
+网关：zuul  gateway
+分布式追踪系统：sleuth+zipkin
+
+
+
+一、eureka 注册中心 (server提供注册和发现的功能   client注册，发送心跳)   
+eureka.client.serviceUrl.defaultZone属性是用于配置集群中其他节点的,多个节点,使用逗号','分隔
+client注册成功: DiscoveryClient_EUREKA-CLIENT/TZYY-WJ4:eureka-client:8701 - registration status: 204
+
+二、eureka注册中心高可用
+server端相互注册即可
+
+
+1.服务注册与发现  server client
+服务提供方将己方调用地址注册到服务注册中心，让服务调用方能够方便地找到自己；服务调用方从服务注册中心找到自己需要调用的服务的地址。
+2.负载均衡  ribbon
+服务提供方一般以多实例的形式提供服务，负载均衡功能能够让服务调用方连接到合适的服务节点。并且，服务节点选择的过程对服务调用方来说是透明的。
+3.服务网关
+服务网关是服务调用的唯一入口，可以在这个组件中实现用户鉴权、动态路由、灰度发布、A/B测试、负载限流等功能。
+4.配置中心
+将本地化的配置信息(Properties、xml、yml等)注册到配置中心，实现程序包在开发、测试、生产环境中的无差别性，方便程序包的迁移，也是无状态特性。
+5.继承框架
+微服务组件都以职责单一的程序包对外提供服务，继承框架以配置的形式将所有微服务组件(特别是管理端组件)集成到统一的界面框架下，让用户能够在统一的界面中使用系统。springcloud就是一个集成框架。
+6.调用链监控
+记录完成一次请求的先后衔接和调用关系，并将这种串行或并行的调用关系展示出来。在系统出错时，可以方便地找到出错点。
+7.支撑平台
+系统微服务化后，各个业务模块经过拆分变得更加细化，系统地部署、运维、监控等都比单体应用架构更加复杂，这就需要将大部分的工作自动化。
+现在docker等工具可以给微服务架构的部署带来较多的便利，例如持续集成、蓝绿发布、健康检查、性能监控等等。如果没有合适的支撑平台或工具，微服务架构就无法发挥它最大的功效。
+
+DiscoveryClient构造过程顺序:
+初始化一堆信息
+拉取注册表信息
+向server注册自己
+初始化3个任务(发送心跳维持租约;去服务端拉取注册表信息;监控自己,有更新重新注册)
+关闭的时候告诉server下线
+
+server
+接受服务注册
+接受服务心跳
+服务剔除(正常情况下没有维持心跳的client)  正常情况：接收心跳数量>0&&总心跳数>阈值(应用实例数*2*0.85) 
+服务下线(client通知)
+集群同步
+
+灰度发布
+生产环境中，区分用户，把新app推送到这部分用户
+
+
+healthcheck 健康检查组件  
+如果db挂了，可以反应出来(eureka依然会是UP)  
+
+eureka监听事件
+服务下线事件
+服务注册事件
+服务续约事件
+注册中心可用事件
+注册中心启动
+
+业务层组装能力层
+业务：注册用户
+能力：发送验证码+用户数据库+发短信
+
+服务间调用
+
+RESTful网络请求是指RESTful风格的网络请求，其中REST是Resource Representational State Transfer的缩写，直接翻译即“资源表现层状态转移”。
+Resource代表互联网资源。所谓“资源”是网络上的一个实体，或者说网上的一个具体信息。它可以是一段文本、一首歌曲、一种服务，可以使用一个URI指向它，每种“资源”对应一个URI。
+Representational是“表现层”意思。“资源”是一种消息实体，它可以有多种外在的表现形式，我们把“资源”具体呈现出来的形式叫作它的“表现层”。比如说文本可以用TXT格式进行表现，也可以使用XML格式、JSON格式和二进制格式；视频可以用MP4格式表现，也可以用AVI格式表现。URI只代表资源的实体，不代表它的形式。它的具体表现形式，应该由HTTP请求的头信息Accept和Content-Type字段指定，这两个字段是对“表现层”的描述。
+State Transfer是指“状态转移”。客户端访问服务的过程中必然涉及数据和状态的转化。如果客户端想要操作服务端资源，必须通过某种手段，让服务器端资源发生“状态转移”。而这种转化是建立在表现层之上的，所以被称为“表现层状态转移”。客户端通过使用HTTP协议中的四个动词来实现上述操作，它们分别是：获取资源的GET、新建或更新资源的POST、更新资源的PUT和删除资源的DELETE。
+
+负载均衡
+软件负载均衡：DNS   服务端(集中式)  客户端
+服务端负载均衡：在客户端和服务端中间使用代理  nginx
+客户端负载均衡：根据自己的情况做负载。ribbon
+客户端和服务端区别在于，服务端地址列表存储位置，以及负载算法在哪里。
+
+客户端负载均衡
+所有客户端节点都有一份自己要访问的服务端地址列表，服务端地址列表从服务注册中心获取
+服务端负载均衡
+客户端节点只知道单一服务代理的地址，服务代理则知道所有服务端的地址。
+
+feign?
+
+Hystrix熔断
+我调用别人，别人坏了，我要保证我不坏(停止使用坏的，并找可用备用的)。
+
+舱壁模式(独享)
+
+雪崩效应
+因为阻塞导致资源被占用，直到耗尽。故障一层一层传递(从下往上传)，滚雪球一样越滚越大。
+服务不可用原因:
+服务器宕机
+网络故障
+程序异常
+负载过大
+缓存击穿 缓存中没有但数据库中有的数据(一般是缓存时间到期)
+
+容错机制
+1.设置网络超时
+2.使用断路器模式(多次失败,开启,快速失败;时间窗口后,半开;如果成功,恢复)
+
+降级
+为了在整体资源不够的时候，适当放弃部分服务，将主要的资源投放到核心服务中，待渡过难关之后，再重启已关闭的服务，保证了系统核心服务的稳定。当服务停掉后，自动进入fallback(备用方法)替换主方法。
+用fallback方法代替主方法执行并返回结果，对失败的服务进行降级。当调用服务失败次数在一段时间内超过了断路器的阈值时，断路器将打开，不再进行真正的调用，而是快速失败，直接执行fallback逻辑。服务降级保护了服务调用者的逻辑。
+熔断和降级：
+共同点：
+	1、为了防止系统崩溃，保证主要功能的可用性和可靠性。
+	2、用户体验到某些功能不能用。
+不同点：
+	1、熔断由下级故障触发，主动惹祸。
+	2、降级由调用方从负荷角度触发，无辜被抛弃。
+
+
+
+
+api-driver 服务消费者
+service-sms  服务提供者
+eureka 注册中心
+api调service
+
+histrix-dashbord可视化监控
+线程池
+
+nginx+keepalived高可用
+
+zuul网关
+集成了ribbon和hystrix
+nginx(高可用)->网关(高可用)->eureka
+负载均衡
+过滤器 
+限流
+网关: 动物园门口检票一样，进去后动物随便看。没有网关，就像每种动物都独立售票。 游乐园也差不多。还有限流(整个动物园人数不能超过多少)
+访问:
+http://网关ip:网关端口/服务名/微服务路径
+
+过滤器  有TYPE  order越小越优先
+类中shouldFilter()返回false 则不执行run()  run中写具体业务逻辑
+过滤器容错
+
+令牌桶
+限流 TYPE=pre
+
+开关类 Maker
+获取上下文
+RequestContext.getCurrentContext()
+
+代码执行过程
+zuulservlet->preRoute(error)/route(error)->postRoute(error)
+
+
+
+
+配置中心
+config server端从git上拉取配置，缓存到本地(克隆到本地)，通过rest服务提供给微服务(config client端)
+注意: 没有定时拉取的策略
+
+
+config server 和 config client(各微服务自身)都是eureka的client端
+config client去config server获取配置信息,config server去git
+手动刷新 请求actuator地址
+
+
+
+
+
+
+注册中心 netflix.eureka  
+服务列表
+netflix.feign  发起服务调用
+netflix.zuul路由   url
+监控中心 springcloud Admin
+消息  spring message,spring integration,springcloud stream
+总线 AMQP  springcloud bus
+前端controller  多个
+都是springboot 只有网关暴露在外面，后续的通过物理隔离，从网关开始都注册到eureka中
+[]是服务提供者
+用户->网关(netflix.zuul路由)->权限(spring.security,oauth2.0单点登录,JWT token)->(SpringSession)->[前端controller(spring.shiro拦截器)->netflix.eureka(注册中心)->服务列表->netflix.feign(远程服务调用)->netflix.ribbon(客户端负载均衡)->netflix.hystrix(熔断,降级)]->分布式事务(alibaba seata)->链路追踪(zipkin,spirngcloud.sleuth)->分布式锁(Zookeeper,Curator,redlock)->支付(服务提供service方,Actuator节点信息上报给hystrix和springcloud Admin监控平台)
+                                                                                                                                                                                 成功 feign->返回(json、模板引擎等)
+                                                                                                                                                                                                                                   
+
+
