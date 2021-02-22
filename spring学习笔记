@@ -1,0 +1,38 @@
+spring是对象管理容器。
+
+IOC   AOP    事务
+
+IOC Inversion of Control(控制反转) / DI Dependency Injection（依赖注入）
+@Autowired,@Resource,@Required
+IoC是一个概念，是一种思想，其实现方式多种多样。当前比较流行的实现方式之一是DI。
+
+控制反转把对象的控制权交给第三方(spring),DI包括new对象,设置对象属性(get/set)等，通过xml配置或者注解。
+
+Spring的配置文件是用于指导Spring工厂进行Bean的生产、依赖关系注入及Bean实例分发的“图纸”，它是一个或多个标准的XML文档
+
+在需要注册到容器的类上添加@Component标签，标识这个类由Spring容器接管
+同属@Component的额外三个注解
+@Controller @Service @Repository
+这三个注意在MVC开发中会经常用到，除了注解名字和Component不一样之外，其余功能都一样。
+Spring额外提供这三个注解的目的主要是为了区分MVC中每个类的区别。
+
+AOP
+AOP(Aspect Oriented Programming)面向切面编程。
+面向切面，是与OOP(Object Oriented Programming)面向对象编程并列的编程思想。
+
+spring aop有两种模式一种jdk动态代理(默认)，另一种CGLIB动态代理(类没有接口)
+
+spring获取对象
+ApplicationContext ct = ClassPathXmlApplicationContext("applicationContext.xml")
+ct.getBean("user");(xml文件中要有相应的bean)
+
+applicationContext.xml    
+xmlns表示 namespace，作用是ID
+xmlns:xsi  校验用  xsd  dtd
+import其他xml resource
+
+<bean>中 id  name 
+可以通过构造器DI,constructor-arg(不方便增加属性)；可以通过属性DI,property(要有set方法)
+
+alias别名
+
