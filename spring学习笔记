@@ -36,3 +36,127 @@ import其他xml resource
 
 alias别名
 
+作用域 scope 默认sigleton
+单例:sigleton\websocket(连接)\request(请求)\session(会话)\application(应用)   和生命周期绑定
+每次都new:prototype
+pojo用prototype
+singleton会直接new
+prototype会检查引用，发现引用未实例化，则实例化引用对象
+
+
+
+
+mvc  controller,service,dao都是单例，不要用成员变量
+单例模式，并发时有问题，不能加同步锁，影响性能。
+每个线程threadlocal访问相同的c,s,d，其中的成员变量是共享的
+
+
+
+懒加载
+
+
+循环依赖 
+循环引用 scope=singleton可以 导致内存清理问题，互相有引用不会被垃圾回收
+A类中引用B类，B类中引用C类，C类中引用A类
+spring中有个像注册表的map，key和value，new A的时候，发现引用B，去new B，发现引用C，去new C，发现引用A，就无限循环等待new  先有鸡还是先有蛋?
+
+
+depends-on  弱引用关系，优先初始化引用对象，否则会报错
+
+懒加载  预初始化
+
+Autowire   byname   bytype
+
+
+注解方式
+@component   注册bean  相当于<bean>  引用时@Autowire  不用getset了
+
+xml:context:component-scan  扫描包内的@component标签的类 都注册进来
+
+@Autowired
+@Qualifier("xx")指定名称
+
+bean类  做ORM映射  要线程安全(成员属性)  不能是单例的
+
+多线程情况下
+一个线程创建连接；另一个线程关闭连接。都对应Connection类，通过ThreadLocal进行线程隔离
+
+
+
+cglib动态代理
+继承MethodInterceptor，实现intercept方法，一个生成代理子类的Enhancer
+
+asm官网  https://asm.ow2.io/
+java ASM    java汇编  对.class进行修改
+javap
+ide  seting   plugin jclasslib
+a = a++
+ 0 bipush 8        把8放到栈里
+ 2 istore_1        把栈顶的数8存储到编号为1的局部变量里   (局部变量编号0是args,编号1是a)   到这里执行完a=8
+ 3 iload_1         把编号1的局部变量放到栈中(8)
+ 4 iinc 1 by 1     把局部变量编号1执行+1     进行+1的是局部变量,不是栈中数据
+ 7 istore_1        把栈顶的数8存储到编号为1的局部变量里   (a最终等于8)
+
+
+ 0 bipush 10
+ 2 istore_0 10
+ 3 getstatic #2 <java/lang/System.out>
+ 6 iload_0
+ 7 iconst_0
+ 8 idiv
+ 9 invokevirtual #4 <java/io/PrintStream.println>
+12 bipush 40
+14 istore_0
+
+ASM涉及设计模式:Iterator迭代器   Visitor访问者     ChainOfResponsibility责任链    Adapter适配器
+ClassReader 读class文件
+ClassPrinter 继承ClassVisitor
+ClassVisitor 在中间 左边reader  右边writer     
+ClassWriter 写class文件
+ClassVisitor把文件读到内存,visit方法访问版本,方法,属性，父类等所有class中包含的内容
+
+
+打印类
+ClassPrinter cp = new ClassPrinter();//cp中写自己想要做的事情 cp中有相对应的visit方法
+ClassReader cr = new ClassReader("java.lang.Runnable");//cr去读取目标类class
+cr.accept(cp,0);
+
+
+生成类
+ClassWriter cw = new ClassWriter(0);
+//生成基础信息1.5版本, public abstract interface Comparable类,路径在pkg包下, 父类Object
+cw.visit(V1_5, ACC_PUBLIC + ACC_ABSTRACT + ACC_INTERFACE,"pkg/Comparable",null,"java/lang/Object",null);
+//生成属性  名字less  I表示int  默认值-1
+cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, "LESS", "I", null, -1).visitEnd();
+cw.visitField(ACC_PUBLIC + ACC_FINAL + ACC_STATIC, "EQUAL", "I", null, 0).visitEnd();
+//生成方法 compareTo 参数Object  返回值I int
+cw.visitMethod(ACC_PUBLIC + ACC_ABSTRACT, "compareTo","(Ljava/lang/Object;)I", null, null).visitEnd();
+cw.visitEnd();
+byte[] b = cw.toByteArray();//转换成字节数组
+
+MyClassLoader myClassLoader = new MyClassLoader();
+Class c = myClassLoader.defineClass("pkg.Comparable",b);
+sout(c.getMethods()[0].getName());
+
+
+加入动态代理
+Reader -> Adapter -> Writer
+new ClassReader 读取一个.class文件
+new ClassWriter
+new ClassVisitor(ASM4, cw){//访问class的visit
+  visitMethod(){//在访问方法的时候
+    return new MethodVisitor(ASM4, mv){//访问方法的visit
+	  public void visitCode(){//先静态调用TimeProxy的befor方法 void类型
+	    visitMethodInsn(INVOKESTATIC, "com/TimeProxy", "before", "()V", false);
+		super.visitCode();//再调用原先的方法
+	  }
+	}
+  }
+}
+cr.accept(cv,0);//cv访问cr读取的内容,cv把内容给cw生成
+byte[] b2 = cw.toByteArray();//生成代码二进制字节
+MyClassLoader cl = new MyClassLoader();
+cl.loadClass("com.TimeProxy");//目标类
+Class c2 = cl.defineClass("com.MyProxy",b2);//生成新类
+ce.getConstructor().newInstance();
+
