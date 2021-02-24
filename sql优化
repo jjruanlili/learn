@@ -30,3 +30,15 @@
 原sql:select * from atestrll where param1 IS NULL;
 优化:建表时设置字段默认值为0或者其他值(若建表时未设置,建表后也可修改),备注中说明各值含义。
 select * from atestrll where param1 = 0;
+
+
+oracle分页查询   
+SELECT * FROM 
+	(SELECT a.*, ROWNUM rn FROM 
+		(SELECT * FROM table_name) a
+    WHERE ROWNUM <= 40)
+ WHERE rn >= 21
+ 注意:
+ 1.rownum要起别名,  rownum下标从1开始,limit下标从0开始
+ 2.内部 用<= ,因为rownum的机制只会正确判断<=
+ 3.外部用>=,判断子查询的结果，绕过了rownum机制
