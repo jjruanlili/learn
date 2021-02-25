@@ -56,9 +56,9 @@ mvc  controller,service,dao都是单例，不要用成员变量
 
 
 循环依赖 
-循环引用 scope=singleton可以 导致内存清理问题，互相有引用不会被垃圾回收
+循环引用 首个类scope=singleton可以  
 A类中引用B类，B类中引用C类，C类中引用A类
-spring中有个像注册表的map，key和value，new A的时候，发现引用B，去new B，发现引用C，去new C，发现引用A，就无限循环等待new  先有鸡还是先有蛋?
+spring中有个像注册表的map，key和value，new A的时候，发现引用B，去new B，发现引用C，去new C，发现引用A，去new A。就无限循环等待new  先有鸡还是先有蛋?
 
 
 depends-on  弱引用关系，优先初始化引用对象，否则会报错
